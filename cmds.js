@@ -107,23 +107,86 @@ exports.testCmd = (rl, id) => {
 		rl.prompt();
 	}else{
 		try{
-			// quitrar blanco y mayus
 			const quiz = model.getByIndex(id);
-			log(` [${ colorize(id, 'magenta')}]: ${quiz.question} `);
-		    //${colorize('=>','magenta')} ${quiz.answer}
-            rl.question, resp => {
-				if( resp === quiz.answer) {
+			//imprimo la pregunta en azul
+			console.log(colorize(`${quiz.question}`,'red'));
+			rl.question ('Respuesta: ', answer =>{
+				//quitamos simbolos, espacios y mayusc
+			 var resp1= answer.replace(/[^a-zA-Z 0-9.]+/g, '');
+			 var resp2= resp1.trim();
+			 //var resp2= resp1.replace(/\s+/g, '');
+			 var resp= resp2.toLowerCase();
+                //comprobamos si la respuesta es correcta
+            	if( resp === quiz.answer.toLowerCase()) {
+            		log ('Su respuesta es correcta. ');
 					biglog ('Correcta', 'green');
 				} else {
+					log ('Su respuesta es incorrecta. ');
 					biglog ('Incorrecta', 'red');
-				}rl.prompt();
-			};
-        }catch(error)  {
+				}
+				rl.prompt();
+
+			});
+			
+        }catch (error)  {
             errorlog(error.message);
 			rl.prompt();
 		}
 	}	
 	
+};
+
+//va sacando preguntas en orden aleatorio. Se acaba si contestas a todo correctamente
+exports.playCmd = rl => {
+    let score = 0;
+	let porResponder = [];
+	let totalPreguntas = model.getAll();
+
+	//enumeramos las que quedan por responder. Metemos los id existentes
+	for( let i = 0; i < model.count(); i++){
+		porResponder [i]=i;
+	}
+
+    
+    const playOne = () => {
+	if (porResponder===0) {
+		log('No hay que preguntar','black');
+		log('Fin del juego. Aciertos:', score);
+		biglog (score, 'magenta');
+		rl.prompt();
+	}else{
+		//let id = pregunta al azar de por responder (num aleatorio: math.random()*porResponder)
+		let id = Math.floor(Math.random()*porResponder.length);
+        //sacar  la pregunta asociada a ese id;
+        //let quiz = model.getByIndex(id);
+        let quiz = porResponder [id];
+
+		//console.log(colorize(`${quiz.question}`,'red'));
+		rl.question (console.log(colorize(`${quiz.question}`,'red')), answer =>{
+             //quitamos simbolos, espacios y mayusc
+			 var resp1= answer.replace(/[^a-zA-Z 0-9.]+/g, '');
+			 var resp2= resp1.trim();
+			 var resp= resp2.toLowerCase();
+			 var oficial1 = quiz.answer;
+			 var oficial =oficial1.toLowerCase();
+                //comprobamos si la respuesta es correcta
+            	if( resp === oficial) {
+            		log ('CORRECTO - Lleva', score, 'aciertos.');
+					score= core + 1;
+				} else {
+					log ('INCORRECTO - Ha conseguido ', score, 'aciertos');
+					biglog ('Incorrecta', 'red');
+					log ('fin del juego');
+				}
+				rl.prompt();
+
+			});	
+		//quitarla del array
+		porResponder.splice(id,1);
+ 	    }
+ 	}
+ 		
+ 	playOne();	
 };
 
 
