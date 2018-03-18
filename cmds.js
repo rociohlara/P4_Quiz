@@ -212,56 +212,24 @@ validateId(id) // promesa para validar id
 	})
 	.then(() => {
 		rl.prompt();
-	});
-
-    /* if (typeof id === "undefined"){
-		errorlog(`Falta el parametro id. `);
-		rl.prompt();
-	}else{
-		try{
-			const quiz = model.getByIndex(id);
-			//imprimo la pregunta en azul
-			console.log(colorize(`${quiz.question}`,'red'));
-			rl.question ('Respuesta: ', answer =>{
-				//quitamos simbolos, espacios y mayusc
-			 var resp1= answer.replace(/[^a-zA-Z 0-9.]+/g, '');
-			 var resp2= resp1.trim();
-			 //var resp2= resp1.replace(/\s+/g, '');
-			 var resp= resp2.toLowerCase();
-                //comprobamos si la respuesta es correcta
-            	if( resp === quiz.answer.toLowerCase()) {
-            		log ('Su respuesta es correcta. ');
-					biglog ('Correcta', 'green');
-				} else {
-					log ('Su respuesta es incorrecta. ');
-					biglog ('Incorrecta', 'red');
-				}
-				rl.prompt();
-
-			});
-			
-        }catch (error)  {
-            errorlog(error.message);
-			rl.prompt();
-		}
-	}	*/
-	
+	});	
 };
 
 //va sacando preguntas en orden aleatorio. Se acaba si contestas a todo correctamente
 //se pueden guardar en un array las preguntas de forma aleatoria, usar promesas
 exports.playCmd = rl => {
     let score = 0;
-	let porResponder = [];
-	let totalPreguntas = model.getAll();
-	porResponder.length = model.count();
-	let restantes = porResponder.length;
-
-	//enumeramos las que quedan por responder. Metemos los id existentes
+	let totalPreguntas = 0;
+	models.quiz.findAll()
+		.each(quiz => {
+			totalPreguntas++;
+		}) //tenemos el tamaño de la base de datos
+	let porResponder = totalPreguntas;
+/*	//enumeramos las que quedan por responder. Metemos los id existentes
 	for( let i = 0; i < model.count(); i++){
 		porResponder [i]=i;
         //porResponder[i] = model.getByIndex(i);
-	}
+	}*/
 
     
     const playOne = () => {
@@ -270,42 +238,46 @@ exports.playCmd = rl => {
 		log('Fin del juego. Aciertos:', score);
 		biglog (score, 'magenta');
 		rl.prompt();
-	}else{
-		//let id = pregunta al azar de por responder (num aleatorio: math.random()*porResponder)
-            //var preguntas = model.count;
-           // let aleatorio= Math.random()*preguntas;
-            let id = Math.floor(Math.random()*restantes);
-            //sacar  la pregunta asociada a ese id;
-           // var actual = porResponder[id];
-            //const quiz = porResponder[id];
-             const quiz = model.getByIndex(id);
-			log(` [${ colorize(id, 'magenta')}]: ${quiz.question}`);
-            //log (`${quiz.question}`);
-            rl.question(colorize(' Su respuesta ', 'red'), answer => {
-            //rl.question (log(colorize(`${quiz.question}:  `,'red')), answer => {
-                 //quitamos simbolos, espacios y mayusc
-                 var oficial= quiz.answer.toLowerCase().trim();
-                 var resp = answer.toLowerCase().trim();
-                    //comprobamos si la respuesta es correcta
-                    if( resp === oficial) {
-                        model.deleteByIndex(id);
-                        score ++;
-                        totalPreguntas --;
-                        log (`CORRECTO - Lleva ${score} aciertos.`);
-                        biglog ('correcta', 'green');
-                        playOne();
-				    } else {
-				    	 log (`INCORRECTO - HA CONSEGUIDO ${score} aciertos.`);
-                         biglog ('correcta', 'green');
-                         log (`FIN`);
-				   
-				    rl.prompt();
-				}
+	}else{ //en cada vuelta restar 1 al porResponder;
+		//1.generamos un id al azar
+            let id = Math.floor(Math.random()*porResponder);
+         
+			validateId(id) // promesa para validar id
+				.then(id => models.quiz.findById(id)) //promesa que busca la pregunta a editar por su id
 
-			});
- 	    }
+				.then(quiz => {//pasa como parametro el quiz que ha encontrado
+					if (!quiz) { // si no ha encontrado el quiz, id que no existe
+						throw new Error (`No existe un quiz asociado al id=${id}.`);
+					}
+
+					//process.stdout.isTTY && setTimeout(() => {rl.write(quiz.question)}, 0);
+					log(`[${colorize(quiz.id, 'magenta')}]: ${quiz.question}`); //imprime la pregunta
+						return makeQuestion(rl, ' Introduzca la respuesta ') //edita el texto de la respuesta
+						.then (a => {
+							if (quiz.answer === a){
+								score ++;
+								porResponder --;
+								log (`CORRECTO - Lleva ${score} aciertos.`);
+                       			biglog ('correcta', 'green');
+                        		playOne();
+							} else {
+								log (`INCORRECTO - HA CONSEGUIDO ${score} aciertos.`);
+                       			biglog ('correcta', 'green');
+                         		log (`FIN`)
+                         		.then(() => {
+									rl.prompt();
+								});
+							}
+						});
+				})
+				.catch(Sequelize.ValidationError, error =>{ //error de validacion
+					errorlog('El quiz es erroneo:');
+					error.errors.forEach(({message}) => errorlog(message));
+				})
+				.catch(error => {
+					errorlog(error.message);
+				})
  	}
- 		
  	playOne();	
 };
 
@@ -322,3 +294,5 @@ exports.creditsCmd = rl => {
 exports.quitCmd = rl => {
     rl.close();
 };
+
+
