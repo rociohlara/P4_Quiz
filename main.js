@@ -5,6 +5,7 @@ const model = require('./model');
 const {log, biglog, errorlog, colorize} = require("./out");
 const cmds = require("./cmds");
 
+
 //mensaje inicial
 biglog ('CORE Quiz', 'green')
 

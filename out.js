@@ -1,5 +1,6 @@
 const figlet = require('figlet');
 const chalk = require('chalk');
+const readline = require('readline');
 
  //dar color
 const colorize = (msq, color)=> {
@@ -30,3 +31,4 @@ exports = module.exports = {
 	biglog,
 	errorlog
 };
+

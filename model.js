@@ -1,113 +1,36 @@
-
-const fs = require ("fs");
-const DB_FILENAME = "quizzers.json";
-
-
-
-//modelo de datos
-//esta variable se mantiene todos los quizzers existentes
-//es un array de objetos, donde cada objet tiene los atributos questio
-//y answer para guardar el texto de la pregunta y el de la respuesta
-let quizzers =[
-{
-	question: "Capital de Italia",
-	answer: "Roma"
-},
-{
-	question: "Capital de Francia",
-	answer: "París"
-},
-{
-	question: "Capital de España",
-	answer: "Madrid"
-},
-{
-	question: "Capital de Portugal",
-	answer: "Lisboa"
-}
-];
-
-//funciones para tratar wl fichero
-
-const load = () => {
-	fs.readFile(DB_FILENAME, (error, data) => {
-		    if (error){
-	             //la primera vez no existe el fichero
-	             if(error.code === 'ENOENT'){
-	             	save();
-	             	return;
-	             }
-	             throw error;
-		    }
-	    let json = JSON.parse(data);
-	    if (json) {
-	    	quizzers = json;
-	    }
-		});
-};
-
-const save = () => {
-	fs.writeFile(DB_FILENAME,
-		JSON.stringify(quizzers),
-		error => {
-			if (error){
-			 throw error;
-			}
-		});
-};
-
-
-
-
-
-
-//metodos:
-
-//1.count: devuelve el numero de preguntas existentes
-exports.count =() => quizzers.length;
-
-//2.add: añade un nuevo quizz
-exports.add =(question, answer) => {
-	quizzers.push({
-         question: (question || "").trim(),
-         answer: (answer || "").trim(),
-	});
-	save();
-};
-
-//3.update: actualiza el quiz situado en la posicion index
-exports.update = (id, question, answer) => {
-	const quiz = quizzers [id];
-	if (typeof quiz ==="undefined"){
-		throw new Error (`El valor del parametro id no es valido.`)
+//cargo el módulo sequelize
+const Sequelize = require('sequelize');
+//genero una instancia de sequelize para acceder a una base de datos
+const sequelize = new Sequelize("sqlite:quizzes.sqlite", {logging: false});
+//genero un modelo de datos (con preg y respuesta)
+sequelize.define('quiz', {
+	question: { //unicas y no vacias
+		type: Sequelize.STRING,
+		unique: {msg: "Ya existe esta pregunta"},
+		validate: {notEmpty: {msg:"La pregunta no puede estar vacia"}}
+	},
+	answer: { //no vacias
+		type: Sequelize.STRING,
+		validate: {notEmpty: {msg: "La respuesta no puede estar vacia"}}
 	}
-	quizzers.splice(id, 1,{
-		question: (question || "").trim(),
-        answer: (answer || "").trim()
-	});
-	save();
-};
+});
 
-//4.getAll: devuelve todos los quiz existentes (una clonacion)
-exports.getAll = () => JSON.parse(JSON.stringify(quizzers));
-
-//5.getByIndex: devuelve un clon del quiz almacenado en la posicion dada
-exports.getByIndex = id => {
-    const quiz = quizzers [id];
-    if (typeof quiz === "undefined") {
-    	throw new Error (`El valor del parametro id no es valido`);
-    }
-    return JSON.parse(JSON.stringify(quiz));
-};
-
-//6.deleteByIndex: elimina el quiz situado en la posicion dada
-exports.deleteByIndex = id => {
-    const quiz = quizzers [id];
-    if (typeof quiz === "undefined") {
-    	throw new Error (`El valor del parametro id no es valido`);
-    }
-    quizzers.splice(id, 1);
-    save();
-};
-
-load();
+//sincronizacion: miro si en la base de datros estan las tablas que necesito
+sequelize.sync()
+.then(() => sequelize.models.quiz.count()) //promesa
+.then(count => {
+	//si esta vacio creamos unas preg. por defecto
+	if(!count) {
+		return sequelize.models.quiz.bulkCreate([ //el return es para que la promesa del then espere a que esto termine
+				{ question: "¿capital de Italia?", answer: "Roma" },
+				{ question: "¿capital de Francia?", answer: "Paris" },
+				{ question: "¿capital de España?", answer: "Madrid" },
+				{ question: "¿capital de Portugal?", answer: "Lisboa" }
+			]);
+	}
+})
+.catch(error => {
+	console.log(error);
+}),
+//exporto sequelize
+module.exports = sequelize;
