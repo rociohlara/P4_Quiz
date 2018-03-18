@@ -224,62 +224,66 @@ exports.playCmd = rl => {
 		.each(quiz => {
 			totalPreguntas++;
 		}) //tenemos el tamaño de la base de datos
-	let porResponder = totalPreguntas;
-/*	//enumeramos las que quedan por responder. Metemos los id existentes
-	for( let i = 0; i < model.count(); i++){
-		porResponder [i]=i;
-        //porResponder[i] = model.getByIndex(i);
-	}*/
 
-    
-    const playOne = () => {
-	if (porResponder===0) {
-		log('No hay mas que preguntar');
-		log('Fin del juego. Aciertos:', score);
-		biglog (score, 'magenta');
-		rl.prompt();
-	}else{ //en cada vuelta restar 1 al porResponder;
-		//1.generamos un id al azar
-            let id = Math.floor(Math.random()*porResponder);
-         
-			validateId(id) // promesa para validar id
-				.then(id => models.quiz.findById(id)) //promesa que busca la pregunta a editar por su id
+	.then (() => {
+		let porResponder = totalPreguntas;
+	/*	//enumeramos las que quedan por responder. Metemos los id existentes
+		for( let i = 0; i < model.count(); i++){
+			porResponder [i]=i;
+	        //porResponder[i] = model.getByIndex(i);
+		}*/
+	    
+	    
+	    const playOne = () => {
+		if (porResponder===0) {
+			log('No hay mas que preguntar');
+			log('Fin del juego. Aciertos:', score);
+			biglog (score, 'magenta');
+			rl.prompt();
+		}else{ //en cada vuelta restar 1 al porResponder;
+			//1.generamos un id al azar
+	            let id = Math.floor(Math.random()*porResponder);
+	         
+				validateId(id) // promesa para validar id
+					.then(id => models.quiz.findById(id)) //promesa que busca la pregunta a editar por su id
 
-				.then(quiz => {//pasa como parametro el quiz que ha encontrado
-					if (!quiz) { // si no ha encontrado el quiz, id que no existe
-						throw new Error (`No existe un quiz asociado al id=${id}.`);
-					}
+					.then(quiz => {//pasa como parametro el quiz que ha encontrado
+						if (!quiz) { // si no ha encontrado el quiz, id que no existe
+							throw new Error (`No existe un quiz asociado al id=${id}.`);
+						}
 
-					//process.stdout.isTTY && setTimeout(() => {rl.write(quiz.question)}, 0);
-					log(`[${colorize(quiz.id, 'magenta')}]: ${quiz.question}`); //imprime la pregunta
-						return makeQuestion(rl, ' Introduzca la respuesta ') //edita el texto de la respuesta
-						.then (a => {
-							if (quiz.answer === a){
-								score ++;
-								porResponder --;
-								log (`CORRECTO - Lleva ${score} aciertos.`);
-                       			biglog ('correcta', 'green');
-                        		playOne();
-							} else {
-								log (`INCORRECTO - HA CONSEGUIDO ${score} aciertos.`);
-                       			biglog ('correcta', 'green');
-                         		log (`FIN`)
-                         		.then(() => {
-									rl.prompt();
-								});
-							}
-						});
-				})
-				.catch(Sequelize.ValidationError, error =>{ //error de validacion
-					errorlog('El quiz es erroneo:');
-					error.errors.forEach(({message}) => errorlog(message));
-				})
-				.catch(error => {
-					errorlog(error.message);
-				})
- 	}
- 	playOne();	
-};
+						//process.stdout.isTTY && setTimeout(() => {rl.write(quiz.question)}, 0);
+						log(`[${colorize(quiz.id, 'magenta')}]: ${quiz.question}`); //imprime la pregunta
+							return makeQuestion(rl, ' Introduzca la respuesta ') //edita el texto de la respuesta
+							.then (a => {
+								if (quiz.answer === a){
+									score ++;
+									porResponder --;
+									log (`CORRECTO - Lleva ${score} aciertos.`);
+	                       			biglog ('correcta', 'green');
+	                        		playOne();
+								} else {
+									log (`INCORRECTO - HA CONSEGUIDO ${score} aciertos.`);
+	                       			biglog ('correcta', 'green');
+	                         		log (`FIN`) //;
+	                         		.then(() => {
+										rl.prompt();
+									});
+								}
+							});
+					})
+					.catch(Sequelize.ValidationError, error =>{ //error de validacion
+						errorlog('El quiz es erroneo:');
+						error.errors.forEach(({message}) => errorlog(message));
+					})
+					.catch(error => {
+						errorlog(error.message);
+					})
+	 	} //else
+	    } //playOne
+ 		playOne();	
+ 	}); //then
+}; //playcmds
 
 
 
@@ -294,5 +298,3 @@ exports.creditsCmd = rl => {
 exports.quitCmd = rl => {
     rl.close();
 };
-
-
