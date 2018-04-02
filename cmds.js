@@ -251,7 +251,7 @@ exports.playCmd = (socket, rl) => {
 
 	    const playOne = () => {
 	    	//falta o falla algo ¿cuando se ponen los .then?
-			if (porResponder===0) => {
+			if (porResponder.lenght===0) {
 				log(socket, 'No hay mas que preguntar');
 				log(socket, 'Fin del juego. Aciertos:', score);
 				biglog (socket, score, 'magenta')
