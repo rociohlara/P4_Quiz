@@ -1,6 +1,6 @@
 const figlet = require('figlet');
 const chalk = require('chalk');
-const readline = require('readline');
+//const readline = require('readline');
 
  //dar color
 const colorize = (msq, color)=> {
@@ -17,7 +17,7 @@ const log = (socket, msq, color) => {
 
 //escribe un mensaje de log en grande
 const biglog=(socket, msq, color) => {
-	log(figlet.textSync(msq, {horizontalLayout: 'full'}), color);
+	log(socket, figlet.textSync(msq, {horizontalLayout: 'full'}), color);
 };
 
 //escribe el mensaje de error emsg
