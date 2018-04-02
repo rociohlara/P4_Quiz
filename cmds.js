@@ -56,9 +56,9 @@ const makeQuestion = (socket, rl, text) => {
 
 //añade una pregunta a la lista
 exports.addCmd = (socket, rl) => {
-	makeQuestion (rl, 'Introduzca una pregunta: ')
+	makeQuestion (socket, rl, 'Introduzca una pregunta: ')
 	.then(q => {
-		return makeQuestion(rl, 'Introduzca una respuesta')
+		return makeQuestion(socket, rl, 'Introduzca una respuesta')
 		.then( a =>{
 			return {question: q, answer: a};
 		});
@@ -72,7 +72,7 @@ exports.addCmd = (socket, rl) => {
 	})
 	.catch(Sequelize.ValidationError, error => {
 		errorlog(socket, 'El quiz es erroneo:');
-		error.errors.forEach(({message}) => errorlog(message));
+		error.errors.forEach(({message}) => errorlog(socket, message));
 	})
 	.catch(error => {
 		errorlog(socket, error.message);
@@ -89,7 +89,7 @@ Funcion auxiliar que devuelve una promesa que
 si todo va bien, la promesa se satisface y devuelove el valor de id a usar
 @param id Parametro com el indice a validar
 */
-const validateId = (socket, id) => {
+const validateId = id => {
 	return new Sequelize.Promise ((resolve, reject) => {
 		if (typeof id === "undefined") { //hay valor?
 			reject(new Error (`Falta el parametro <id>.`));
@@ -130,7 +130,7 @@ exports.deleteCmd = (socket, rl, id) => {
 	validateId(id) //primero promesa de validar id
 	.then(id => models.quiz.destroy({where: {id}})) //desdemodels(la base de datos) hago un destroy del correspondiente al id
 	.catch(error => {
-		errorlog(error.message);
+		errorlog(socket, error.message);
 	})
 	.then(() => {
 		rl.prompt();
@@ -148,10 +148,10 @@ exports.editCmd = (socket, rl, id) => {
 		}
 
 		process.stdout.isTTY && setTimeout(() => {rl.write(quiz.question)}, 0);
-		return makeQuestion(rl, 'Introduzca la pregunta:') //edita texto de la pregunta
+		return makeQuestion(socket, rl, 'Introduzca la pregunta:') //edita texto de la pregunta
 		.then (q => {
 			process.stdout.isTTY && setTimeout (() => {rl.write(quiz.answer)}, 0);
-			return makeQuestion(rl, ' Introduzca la respuesta ') //edita el texto de la respuesta
+			return makeQuestion(socket, rl, ' Introduzca la respuesta ') //edita el texto de la respuesta
 			.then (a => {
 				quiz.question = q;
 				quiz.answer = a;
@@ -167,7 +167,7 @@ exports.editCmd = (socket, rl, id) => {
 	})
 	.catch(Sequelize.ValidationError, error =>{ //error de validacion
 		errorlog(socket, 'El quiz es erroneo:');
-		error.errors.forEach(({message}) => errorlog(message));
+		error.errors.forEach(({message}) => errorlog(socket, message));
 	})
 	.catch(error => {
 		errorlog(socket, error.message);
@@ -191,10 +191,10 @@ validateId(id) // promesa para validar id
 		}
 
 		//process.stdout.isTTY && setTimeout(() => {rl.write(quiz.question)}, 0);
-		log(`[${colorize(quiz.id, 'magenta')}]: ${quiz.question}`); //imprime la pregunta
-			return makeQuestion(rl, ' Introduzca la respuesta ') //edita el texto de la respuesta
+		log(socket, `[${colorize(quiz.id, 'magenta')}]: ${quiz.question}`); //imprime la pregunta
+			return makeQuestion(socket, rl, ' Introduzca la respuesta ') //edita el texto de la respuesta
 			.then (a => {
-				if (quiz.answer === a){
+				if (quiz.answer.toLowerCase().trim() === a.toLowerCase().trim()){
 					log (socket, 'Su respuesta es correcta. ');
 					biglog (socket, 'Correcta', 'green');
 				} else {
@@ -205,7 +205,7 @@ validateId(id) // promesa para validar id
 	})
 	.catch(Sequelize.ValidationError, error =>{ //error de validacion
 		errorlog(socket, 'El quiz es erroneo:');
-		error.errors.forEach(({message}) => errorlog(message));
+		error.errors.forEach(({message}) => errorlog(socket, message));
 	})
 	.catch(error => {
 		errorlog(socket, error.message);
@@ -247,22 +247,14 @@ exports.playCmd = (socket, rl) => {
 	   */
 
 	   //llenamos el array con todas las preguntas
-        models.quiz.findAll()
-				.then (quizzes => {
-					quizzes.forEach ((quiz, id) => {
-						 ++totalPreguntas;
-						 porResponder.lenght = totalPreguntas;
-					     porResponder.push(quiz.id);
-				         }) //quizzers.foreach
-						 
-				})
+     
 
 	    const playOne = () => {
 	    	//falta o falla algo ¿cuando se ponen los .then?
 			if (porResponder===0) => {
-				log('No hay mas que preguntar');
-				log('Fin del juego. Aciertos:', score);
-				biglog (score, 'magenta')
+				log(socket, 'No hay mas que preguntar');
+				log(socket, 'Fin del juego. Aciertos:', score);
+				biglog (socket, score, 'magenta')
 		    
 			.then(() => {
 				rl.prompt();
@@ -288,7 +280,7 @@ exports.playCmd = (socket, rl) => {
                 
 							//process.stdout.isTTY && setTimeout(() => {rl.write(quiz.question)}, 0);
 							log(socket, `[${colorize(quiz.id, 'magenta')}]: ${quiz.question}`); //imprime la pregunta
-								return makeQuestion(rl, ' Introduzca la respuesta ') //edita el texto de la respuesta
+								return makeQuestion(socket, rl, ' Introduzca la respuesta ') //edita el texto de la respuesta
 								.then (a => {
 									if (quiz.answer.toLowerCase() === a.toLowerCase()){
 										score ++;
@@ -320,13 +312,23 @@ exports.playCmd = (socket, rl) => {
 			        }); //del then quiz	
 		    }//primer else	
 	    };//playOne
+	   models.quiz.findAll()
+				.then (quizzes => {
+					quizzes.forEach ((quiz, id) => {
+						 ++totalPreguntas;
+						 porResponder.lenght = totalPreguntas;
+					     porResponder.push(quiz.id);
+				         }) //quizzers.foreach 
+				})
+				.then(() => playOne())
+				.catch(error => log(socket, error));
 }; //playcmds
 
 
 //nombre del autor de la practica
 exports.creditsCmd = (socket, rl) => {
         log(socket, 'Autor de la práctica');
-        log(socket, 'ROCIO');
+        log(socket, 'ROCIO', "green");
         rl.prompt();
 };
 
