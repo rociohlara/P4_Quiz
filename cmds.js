@@ -2,22 +2,22 @@
 
 const {models} = require("./model");
 const {log, biglog, errorlog, colorize} = require("./out");
-const readline = require('readline');
+//const readline = require('readline');
 const Sequelize = require ('sequelize');
 
 //funcion de ayuda que muestra los distintos comandos
 exports.helpCmd = (socket, rl) => {
-	   console.log(socket, 'comandos');
-       console.log(socket, 'h|help - Muestra esta ayuda.');
-       console.log(socket, 'list - Listar los quizzes existentes.');
-       console.log(socket, 'show <id> - Muestra la pregunta y la respuesta el quiz indicado.');
-       console.log(socket, 'add - Añadir un nuevo quiz interactivamente.');
-       console.log(socket, 'delete <id> - Borrar el quiz indicado.');
-       console.log(socket, 'edit <id> - Editar el quiz indicado.');
-       console.log(socket, 'test <id> - Probar el quiz indicado.');
-       console.log(socket, 'p|play - Jugar a preguntar aleatoriamente todos los quizzes.');
-       console.log(socket, 'credits - Créditos.');
-       console.log(socket, 'q|quit - Salir del programa.');
+	   log(socket, 'comandos');
+       log(socket, 'h|help - Muestra esta ayuda.');
+       log(socket, 'list - Listar los quizzes existentes.');
+       log(socket, 'show <id> - Muestra la pregunta y la respuesta el quiz indicado.');
+       log(socket, 'add - Añadir un nuevo quiz interactivamente.');
+       log(socket, 'delete <id> - Borrar el quiz indicado.');
+       log(socket, 'edit <id> - Editar el quiz indicado.');
+       log(socket, 'test <id> - Probar el quiz indicado.');
+       log(socket, 'p|play - Jugar a preguntar aleatoriamente todos los quizzes.');
+       log(socket, 'credits - Créditos.');
+       log(socket, 'q|quit - Salir del programa.');
     rl.prompt();
 };
 
