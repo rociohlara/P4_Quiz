@@ -11,18 +11,18 @@ const colorize = (msq, color)=> {
 };
 
 // escribe el mensaje de log
-const log = (msq, color) => {
-    console.log(colorize(msq, color));
+const log = (socket, msq, color) => {
+    socket.write(colorize(msq, color) + "\n");
 };
 
 //escribe un mensaje de log en grande
-const biglog=(msq, color) => {
+const biglog=(socket, msq, color) => {
 	log(figlet.textSync(msq, {horizontalLayout: 'full'}), color);
 };
 
 //escribe el mensaje de error emsg
-const errorlog = (emsq)  => {
-	console.log (`${colorize("Error", "red")}:${colorize(colorize(emsq, "red"), "bgYellowBright")}`);
+const errorlog = (socket, emsq)  => {
+	 socket.write(`${colorize("Error", "red")}:${colorize(colorize(emsq, "red"), "bgYellowBright")}  + "\n"`);
 };
 
 exports = module.exports = {
