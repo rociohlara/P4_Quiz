@@ -1,7 +1,7 @@
 //por el video voy por 43:59
 
 const readline = require('readline');
-const model = require('./model');
+//const model = require('./model');
 const {log, biglog, errorlog, colorize} = require("./out");
 const cmds = require("./cmds");
 const  net = require ("net"); 
@@ -98,12 +98,11 @@ net.createServer(socket => {
       }
     })
     .on('close', () => {
-      log ('Gracias por jugar, ¡adios!');
+      log (socket, 'Gracias por jugar, ¡adios!');
       //para m,atar todo el servidor
       //process.exit(0);
     });
 
-});
-
-net .listen(3030);
+})
+.listen(3030);
 
